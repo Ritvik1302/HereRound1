@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Explorer with Guided Tours</title>
+    <link rel="stylesheet" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css" />
+    <style>
+        body, html {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: #f0f0f0;
+        }
+        #mapContainer {
+            width: 75%;
+            height: 100%;
+            float:right;
+        }
+        #sidebar {
+            width: 20%;
+            height: 100%;
+            float: left;
+            overflow-y: auto;
+            background-color: #fff;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h2>Guided Tours</h2>
+    <label><input type="checkbox" id="eateriesCheckbox" onchange="filterMarkers()"> Eateries</label><br>
+    <label><input type="checkbox" id="landmarksCheckbox" onchange="filterMarkers()"> Landmarks</label><br>
+    <label><input type="checkbox" id="parksCheckbox" onchange="filterMarkers()"> Parks</label><br>
+</div> 
+<div id="mapContainer"></div>
+
+<script src="https://js.api.here.com/v3/3.1/mapsjs-core.js"></script>
+<script src="https://js.api.here.com/v3/3.1/mapsjs-service.js"></script>
+<script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js"></script>
+<script src="https://js.api.here.com/v3/3.1/mapsjs-ui.js"></script>
+<script src="https://js.api.here.com/v3/3.1/mapsjs-routing.js"></script>
+<script>
+    var places = [
+        { name: "Connaught Place", lat:28.3545315, lng: 75.5898079, type: "eateries" },
+        { name: "Sky Lab", lat:28.363614, lng:75.584951, type: "eateries" },
+        { name: "Tott", lat:28.361010109710275, lng: 75.58551545630705, type: "eateries" },
+        { name: "Looters", lat:28.361473571585126, lng: 75.58470689258338, type: "eateries" },
+        { name: "All Night Canteen", lat:28.36025942772109, lng: 75.5898079, type: "eateries" },
+        { name: "Gym Grounds", lat: 28.35915768979892, lng: 75.59066897050413, type: "parks" },
+        { name: "Cricket Grounds", lat: 28.357348036885185, lng: 75.59110122220343, type: "parks" },
+        { name: "Birla Mueseum", lat: 28.363322319164332, lng: 75.58414853462335, type: "landmarks" },
+        { name: "Clock Tower", lat: 28.363400649215713, lng: 75.58706381483073, type: "landmarks" }
+    ];
+
+    var platform = new H.service.Platform({
+        'apikey': 'YOUR_API_HERE'
+    });
+    var defaultLayers = platform.createDefaultLayers();
+    var mapContainer = document.getElementById('mapContainer');
+    var map;
+
+    function addMarkersToMap() {
+        map.removeObjects(map.getObjects());
+        
+        places.forEach(function(place) {
+            if (document.getElementById(place.type + 'Checkbox').checked) {
+                var marker = new H.map.Marker({lat: place.lat, lng: place.lng});
+                map.addObject(marker);
+            }
+        });
+    }
+    
+    function filterMarkers() {
+        if (!map) return;
+        addMarkersToMap();
+    }
+
+    function initMap() {
+        navigator.geolocation.getCurrentPosition(function(position) {
+        var userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+        };
+        map = new H.Map(
+            mapContainer,
+            defaultLayers.vector.normal.map,
+            {
+                zoom: 16,
+                center: { lat: userLocation.lat,lng: userLocation.lng }
+            });
+
+        var ui = H.ui.UI.createDefault(map, defaultLayers);
+        var mapEvents = new H.mapevents.MapEvents(map);
+        var behavior = new H.mapevents.Behavior(mapEvents);
+
+        addMarkersToMap();
+        }, function(error) {
+        console.error('Error getting user location:', error);
+        map = new H.Map(
+            mapContainer,
+            defaultLayers.vector.normal.map,
+            {
+                zoom: 16,
+                center: { lat: 28.36,lng: 75.58903 }
+            });
+
+        var ui = H.ui.UI.createDefault(map, defaultLayers);
+        var mapEvents = new H.mapevents.MapEvents(map);
+        var behavior = new H.mapevents.Behavior(mapEvents);
+
+        addMarkersToMap();
+    });
+    }
+    
+    document.addEventListener('DOMContentLoaded', initMap);
+</script>
+</body>
+</html>
